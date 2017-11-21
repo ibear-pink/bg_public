@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<sqlMapConfig>
+        <settings cacheModelsEnabled="true" 
+		autoCommit="0"
+    		enhancementEnabled="true"
+                lazyLoadingEnabled="true" 
+                errorTracingEnabled="true" 
+                maxRequests="256"
+                maxSessions="64" 
+                maxTransactions="32" 
+                useStatementNamespaces="true" />
+        
+	<sqlMap resource="/ocsapp/work/wangzhia/ibf/bg_public/demo/chkbds_select_DB.xml" />
+</sqlMapConfig>
+

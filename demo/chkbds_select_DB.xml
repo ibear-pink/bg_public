@@ -1,0 +1,7 @@
+
+<?xml version="1.0" encoding="UTF-8"?>
+<sqlMap namespace="data">
+	<select id="SEL_INTERFACE" parameterClass="Map" resultNum="3" db_no="1">
+		select OPER_ID,MSISDN,REMIND_CONTENT from app.REMIND_ONLINE_INFO where STATE='0' and PARAM_TYPE=${PARAM_TYPE|char}
+	</select>
+</sqlMap>

@@ -1,0 +1,43 @@
+
+BG_INCLUDE="-I${IBF_PATH}/bg_public/bg_public"
+DCI_INCLUDE="-I${DSCI_PATH}/include"
+XML_INCLUDE="-I${IBF_PATH}/ibear_all/xml2/include"
+IBEAR_INCLUDE="-I${IBEAR_PATH}/ibear/include"
+IFILE_INCLUDE="-I${IFILE_PATH}/ifile/include/"
+ICFG_INCLUDE="-I${IBF_PATH}/icfg_all/icfg/include"
+ILOG_INCLUDE="-I${IBF_PATH}/ilog_all/ilog/include"
+
+FILE_H="-I. ${IBEAR_INCLUDE} ${DCI_INCLUDE} ${XML_INCLUDE} ${ICFG_INCLUDE} ${IFILE_INCLUDE} ${ILOG_INCLUDE} ${BG_INCLUDE}"
+FILE_C="CProServerManager.cpp CDealDataMgr.cpp CDealData.cpp CPublicMgr.cpp CPublicData.cpp CPublicTool.cpp DynBase.cpp pubFunc.cpp CFileBackUp.cpp SerialNo.cpp cJSON.c"
+FILE_O="CProServerManager.o CDealDataMgr.o CDealData.o CPublicMgr.o CPublicData.o CPublicTool.o DynBase.o pubFunc.o CFileBackUp.o SerialNo.o cJSON.o"
+IFLAGS="-DSS_64BIT_SERVER -D_REENTRANT -D_DEBUG_INFO_ -D_DSCI_"
+
+######################  判断本机上是否有ZK ###############################
+if [ -d $ZKCLIENT_HOME/include ] ; then
+FILE_H="-I${ZKCLIENT_HOME}/include/ -I${ZKCLIENT_HOME}/include/zookeeper -I${FRAMEWORK_HOME}/include $FILE_H"
+IFLAGS="$IFLAGS -D_ZK_CLIENT_"
+fi
+
+######################  判断本机上是否有SDFS ###############################
+if [ -d $SDFS_HOME/include ] ; then
+FILE_H="-I${SDFS_HOME}/include -I${DSC_PATH}/include $FILE_H"
+IFLAGS="$IFLAGS -D_SDFS_LOG_ -D_SDFS_BAK_"
+fi
+
+CCS="g++ -fPIC -m64 -g -O2 -fpermissive"
+
+#######  编译  #########################
+echo "Compiling the ${FILE_C} $<"
+echo "${FILE_H}"
+echo "${FILE_L}"
+echo "${IFLAGS}"
+${CCS} -c ${IFLAGS} ${FILE_C} ${FILE_H}
+
+#######  C动态库 ########################
+echo "Compiling the  C动态库 $<"
+rm -f libbg_public.so
+rm -f ../lib/libbg_public.so
+g++ -shared -o libbg_public.so ${FILE_O}
+
+mv libbg_public.so ../lib
+
