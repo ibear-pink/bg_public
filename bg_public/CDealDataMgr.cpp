@@ -83,13 +83,15 @@ CDealDataMgr::~CDealDataMgr()
 		delete m_MutexLocker;
 		m_MutexLocker = NULL;
 	}
-	
 	if (NULL != m_breakFile)
 	{
 		m_breakFile->Close();
 		delete m_breakFile;
 		m_breakFile = NULL;
 	}
+#ifdef _SDFS_BAK_
+	ifile_sdfs_destory(&sp);
+#endif
 	Destruction();
 }
 
@@ -198,12 +200,21 @@ int CDealDataMgr::Init(icfg_inifile *inicfg,int cur_processNum)
 	}
 	m_Ibear = new ibear(m_Inicfg->icfg_Key_GetValue("SYSTEM","ibear_name"),pInfo);
 	strcpy(m_LogName,m_Inicfg->icfg_Key_GetValue("LOG","log_name"));
-
+#ifdef _SDFS_BAK_
+	if (0 != ifile_sdfs_init(&sp))
+	{
+		return -1;
+	}
+#endif
 	//解析配置文件
+#ifdef _ZK_CLIENT_
+	m_ProcessNum = atoi(m_Inicfg->icfg_Key_GetValue("ZK_SERVER","NUM","1"));
+#else
 	m_ProcessNum = atoi(m_Inicfg->icfg_Key_GetValue("PROC_SERVER","process_num","1"));
+#endif
 	m_DealType = atoi(m_Inicfg->icfg_Key_GetValue("PROC_SERVER","deal_type"));
 	m_InterfaceType = atoi(m_Inicfg->icfg_Key_GetValue("PROC_SERVER","interface_type"));
-	m_ThreadNum = atoi(m_Inicfg->icfg_Key_GetValue("PROC_SERVER","thread_num"));
+	m_ThreadNum = atoi(m_Inicfg->icfg_Key_GetValue("PROC_SERVER","thread_num","1"));
 	m_TabType = atoi(m_Inicfg->icfg_Key_GetValue("PROC_SERVER","tab_type"));
 	strcpy(m_Indir,m_Inicfg->icfg_Key_GetValue("PROC_SERVER","indir",""));
 	strcpy(m_Bakdir,m_Inicfg->icfg_Key_GetValue("PROC_SERVER","bakdir",""));
@@ -338,6 +349,9 @@ int CDealDataMgr::Process ()
 	{
 		case INTERFACE_TYPE_FILE:
 		{
+			m_breakFile = new SYSTEM_GDF_FILE(m_Breakdir,"breakpoint.log");
+			//断点文件初始化
+			m_breakFile->Open("w+");
 			m_MutexLocker = new ilog_CMutexLock();
 			
 			if(m_DealType == 1)
@@ -401,7 +415,7 @@ int CDealDataMgr::DealFileList()
 	char src_file[1024] = {0};
 	char des_file[1024] = {0};
 #ifdef _SDFS_BAK_
-	GDF_FILE *file = new SDFS_GDF_FILE();
+	GDF_FILE *file = new SDFS_GDF_FILE(&sp);
 #else
 	GDF_FILE *file = new SYSTEM_GDF_FILE();
 #endif
@@ -422,10 +436,6 @@ int CDealDataMgr::DealFileList()
 #ifdef _DEBUG_INFO_
 		printf("%s,%s\n",sf->sFileName,sf->sModifyTime);
 #endif
-		//断点文件初始化(每次重新打开)
-		m_breakFile = new SYSTEM_GDF_FILE(m_Breakdir,"breakpoint.log");
-		m_breakFile->Open("w+");
-		
 		//开始处理
 		switch (m_InterfaceType)
 		{
@@ -487,7 +497,7 @@ int CDealDataMgr::dealFile(char *filename)
 
 	writeBreakLog(filename,BREAK_POINT_1);
 #ifdef _SDFS_BAK_
-	GDF_FILE *file = new SDFS_GDF_FILE(m_Indir,filename);
+	GDF_FILE *file = new SDFS_GDF_FILE(&sp,m_Indir,filename);
 #else
 	GDF_FILE *file = new SYSTEM_GDF_FILE(m_Indir,filename);
 #endif
@@ -519,7 +529,6 @@ int CDealDataMgr::dealFile(char *filename)
 		pTask->sBuff = strBuff;
 		sprintf(pTask->type,"%s",filename);
 		pTask->isEnd = false;
-
 		if (m_GiveType == 1)
 		{
 			//将处理数据放入池中
@@ -551,7 +560,11 @@ int CDealDataMgr::dealFedx(char *filename)
 	short real_len = 0;
 	
 	writeBreakLog(filename,BREAK_POINT_1);
-	SDFS_GDF_FILE *file = new SDFS_GDF_FILE(m_Indir,filename);
+#ifdef _SDFS_BAK_
+	GDF_FILE *file = new SDFS_GDF_FILE(&sp,m_Indir,filename);
+#else
+	GDF_FILE *file = new SYSTEM_GDF_FILE(m_Indir,filename);
+#endif
 	if (0!=file->Open("rb"))
 	{
 		return -1;
@@ -620,7 +633,7 @@ void CDealDataMgr::run()
 			for (int i = 0; i < m_ThreadNum; i++)
 			{
 #ifdef _DEBUG_INFO_
-	printf("刷新%d个线程的第[%d]个信控配置%s,%s\n",m_ThreadNum,i,CurrSysDate(4),m_FreshTime);
+	printf("刷新%d个线程的第[%d]个配置%s,%s\n",m_ThreadNum,i,CurrSysDate(4),m_FreshTime);
 #endif
 				pDealData = m_DealData[i];
 				printf("[%d]刷新配置完成!!!\n",i);

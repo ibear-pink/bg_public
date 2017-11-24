@@ -28,7 +28,7 @@ typedef long long			Int64;
 #define MAX_PARSE_FILE_NUM	16
 #define MAX_PARSE_FIEL_NUM	32
 #define IFCONF_LEN 			1024
-#define MASK				"255.255.0.0"
+#define MASK				"0.0.0.0"
 #define BUFSIZE				1024
 
 /*socket 相关信息*/

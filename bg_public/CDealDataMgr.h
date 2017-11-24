@@ -57,6 +57,7 @@ private:
 	int m_ProcessNum;
 	icfg_inifile *m_Inicfg;
 	bear_db * pInfo;
+	SDFS sp;
 	
 	int m_ThreadNum;		//线程数
 	int m_DealType;			//1.实时接口, 2.定时接口

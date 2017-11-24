@@ -37,6 +37,9 @@ CFileBackUp::~CFileBackUp (void)
 	}
 	delete m_BakConfInfo;
 	m_BakConfInfo = NULL;
+#ifdef _SDFS_BAK_
+	ifile_sdfs_destory(&sp);
+#endif
 	printf ("CFileBackUp destructor over.\n");
 }
 
@@ -48,6 +51,10 @@ void CFileBackUp::Init (stBakConfigInfo *pBakInfo)
 	
 #ifdef _SDFS_BAK_
 	m_IsSDFSBak = true;
+	if (0 != ifile_sdfs_init(&sp))
+	{
+		return;
+	}
 #else
 	m_IsSDFSBak = false;
 #endif
@@ -118,7 +125,7 @@ void CFileBackUp::run(void)
 			if (m_IsSDFSBak)
 			{
 #ifdef _SDFS_BAK_
-				pFile = new SDFS_GDF_FILE (m_BakConfInfo->bakDir, tmpFile);
+				pFile = new SDFS_GDF_FILE (&sp, m_BakConfInfo->bakDir, tmpFile);
 #endif
 				if (pFile == NULL || 0 != pFile->Open ("a+"))
 				{
@@ -189,7 +196,7 @@ Ret CFileBackUp::WriteFile (stFileBakInfo *tFileInfo)
 			if (m_IsSDFSBak)
 			{
 #ifdef _SDFS_BAK_
-				pFile = new SDFS_GDF_FILE (m_BakConfInfo->bakDir, tmpFile);
+				pFile = new SDFS_GDF_FILE (&sp,m_BakConfInfo->bakDir, tmpFile);
 #endif
 				if (pFile == NULL || 0 != pFile->Open ("a+"))
 				{

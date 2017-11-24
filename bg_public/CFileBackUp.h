@@ -66,7 +66,7 @@ public:
 private:
 	//判断文件是否满足备份条件
 	bool IsBackup (GDF_FILE *pFile);
-	
+	SDFS sp;
 private:
 	map<string, GDF_FILE*> m_FileMgr;
 	

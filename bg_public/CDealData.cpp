@@ -99,6 +99,11 @@ void CDealData::run(void)
 		if (pTask->isEnd)
 		{
 			m_stMsg->state = MESSAGE_STATE_OVER;
+			if (pTask->sBuff != NULL)
+			{
+				free(pTask->sBuff);
+				pTask->sBuff = NULL;
+			}
 			delete pTask;
 			pTask = NULL;
 			return;
@@ -106,6 +111,11 @@ void CDealData::run(void)
 		else
 		{
 			DealRecord(pTask);
+		}
+		if (pTask->sBuff != NULL)
+		{
+			free(pTask->sBuff);
+			pTask->sBuff = NULL;
 		}
 		delete pTask;
 		pTask = NULL;

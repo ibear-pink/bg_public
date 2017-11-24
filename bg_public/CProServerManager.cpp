@@ -51,7 +51,16 @@ bool CProServerManager::Init (char *fileName,string input[])
 	strcpy(m_CurNum,input[2].c_str());
 #endif
 	/*读配置文件*/
+#ifdef _SDFS_CFG_
+	SDFS sp;
+	if (0 != ifile_sdfs_init(&sp))
+	{
+		return -1;
+	}
+	m_iniCfg = new icfg_inifile(&sp);
+#else
 	m_iniCfg = new icfg_inifile();
+#endif
 	m_CfgInfo =new ilog_cfgserver();
 	iRet = m_iniCfg->icfg_ReadFile(fileName);
 	if (iRet != 0)
@@ -88,14 +97,14 @@ bool CProServerManager::Start (map<string,string> classMap)
 		m_CfgInfo->logfile_infos[i].log_backup_size = atoi(m_iniCfg->icfg_Key_GetValue("LOG",chname,"1"));
 		
 	}
-	//加载业务服务器配置
-	m_ProcessNum = atoi(m_iniCfg->icfg_Key_GetValue("PROC_SERVER","process_num","1"));
 	
 	stAppCfg_Zookeeper *zkCfgInfo = new stAppCfg_Zookeeper();
 	int iOnlineFlag = 1;/*0; zk注册nodetype类型：抢占式、非抢占式*/
 	char seriano[3+1] = {0};//序列开头
+	//加载业务服务器配置
 	char program_name[64+1] = {0};
 	strcpy(program_name ,m_iniCfg->icfg_Key_GetValue("SYSTEM","program_name"));
+	m_ProcessNum = atoi(m_iniCfg->icfg_Key_GetValue("PROC_SERVER","process_num","1"));
 
 #ifdef _ZK_CLIENT_
 	strcpy (zkCfgInfo->chCluster, m_HostId);
@@ -126,6 +135,7 @@ bool CProServerManager::Start (map<string,string> classMap)
 	printf("Zookeeper Register success [%s] [%s] [%s] [%s]!!!\n",szAddress,seriano,m_Num,m_CurNum);
 	m_iniCfg->icfg_SetKey((char *)"ZK_SERVER",(char *)"HOST_ID",m_HostId);
 	strreplace(m_CfgInfo->log_path,m_CfgInfo->log_path,(char *)ZK_HOST_ID,m_HostId);
+	m_ProcessNum = atoi(m_Num);
 #endif
 	m_iniCfg->icfg_SetKey((char *)"ZK_SERVER",(char *)"NUM",m_Num);
 	m_iniCfg->icfg_SetKey((char *)"ZK_SERVER",(char *)"CUR_NUM",m_CurNum);
